@@ -1,0 +1,2 @@
+# SAP_HANA_TABLE_DISTRIBUTION
+Table Distribution
