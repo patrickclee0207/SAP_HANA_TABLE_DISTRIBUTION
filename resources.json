@@ -1,0 +1,4 @@
+"build": {
+    "excludedFolders" : [ "/joey/views" ], 
+    "excludedFiles": [ "/.xsaccess", "/.xsapp", "/hosts.xsjs", "/index.html", "/main.html", "/mem.xsjs", "/NewFile.html", "/sum.xsjs", "/.project", "/.xsprivileges", "/model_access.hdbrole"]
+}

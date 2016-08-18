@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+<title>Table Distribution</title>
+<!-- 1.) Load SAPUI5 (from a remote server), select theme and control library -->
+<script id="sap-ui-bootstrap"
+	src="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js"
+	data-sap-ui-theme="sap_bluecrystal"
+	data-sap-ui-libs="sap.ui.commons,sap.ui.ux3,sap.ui.table"></script>
+<!-- 2.) Create a UI5 button and place it onto the page -->
+<script>
+	sap.ui.localResources("Table_Distribution");
+	function createTable(data, title) {
+		var d = new Date();
+		var table_id = "soTable" + (d.getTime()).toString();
+		var oModel = new sap.ui.model.json.JSONModel();
+		var oControl;
+		var temp = Object.keys(data[0]);
+		var oSHTable = new sap.ui.table.Table(table_id, {
+			visibleRowCount : data.length,
+		});
+		for (var i = 0; i < temp.length; i++) {
+			oControl = new sap.ui.commons.TextView().bindProperty("text",
+					temp[i]);
+			oControl.setTextAlign("End");
+			oSHTable.addColumn(new sap.ui.table.Column({
+				label : new sap.ui.commons.Label({
+					text : temp[i]
+				}),
+				template : oControl,
+				sortProperty : temp[i],
+				filterProperty : temp[i],
+				filterOperator : sap.ui.model.FilterOperator.EQ,
+				flexible : true
+			}));
+		}
+		oSHTable.bindRows("/");
+		oSHTable.setTitle(title);
+		oModel.setData(data);
+		oSHTable.setModel(oModel);
+		return {
+			ID : table_id,
+			TABLE : oSHTable
+		}
+	}
+	var oLayout = new sap.ui.commons.layout.MatrixLayout({
+		width : "100%",
+		columns : 5
+	});
+	oLayout.placeAt("uiArea1");
+	var oRow0 = new sap.ui.commons.layout.MatrixLayoutRow({
+		id : 'Row-0'
+	});
+	var oCell1 = new sap.ui.commons.layout.MatrixLayoutCell({
+		colSpan : 2
+	});
+	var oCell2 = new sap.ui.commons.layout.MatrixLayoutCell({
+		colSpan : 3
+	});
+	var oRow1 = new sap.ui.commons.layout.MatrixLayoutRow({
+		id : 'Row-1'
+	});
+	var oCell3 = new sap.ui.commons.layout.MatrixLayoutCell({
+		colSpan : 1
+	});
+	var oCell4 = new sap.ui.commons.layout.MatrixLayoutCell({
+		colSpan : 4
+	});
+	var oRow2 = new sap.ui.commons.layout.MatrixLayoutRow({
+		id : 'Row-2'
+	});
+	var oCell5 = new sap.ui.commons.layout.MatrixLayoutCell({
+		colSpan : 1
+	});
+	var oCell6 = new sap.ui.commons.layout.MatrixLayoutCell({
+		colSpan : 4
+	});
+	var oRow3 = new sap.ui.commons.layout.MatrixLayoutRow({
+		id : 'Row-3'
+	});
+	var oCell7 = new sap.ui.commons.layout.MatrixLayoutCell({
+		colSpan : 1
+	});
+	var oCell8 = new sap.ui.commons.layout.MatrixLayoutCell({
+		colSpan : 4
+	});
+	var oRow4 = new sap.ui.commons.layout.MatrixLayoutRow({
+		id : 'Row-4'
+	});
+	var oCell9 = new sap.ui.commons.layout.MatrixLayoutCell({
+		colSpan : 2
+	});
+	oRow0.addCell(oCell1);
+	oRow0.addCell(oCell2);
+	oLayout.addRow(oRow0);
+	oRow1.addCell(oCell3);
+	oRow1.addCell(oCell4);
+	oLayout.addRow(oRow1);
+	oRow4.addCell(oCell9);
+	oLayout.addRow(oRow4);
+	oRow2.addCell(oCell5);
+	oRow2.addCell(oCell6);
+	oLayout.addRow(oRow2);
+	oRow3.addCell(oCell7);
+	oRow3.addCell(oCell8);
+	oLayout.addRow(oRow3);
+	var host_data = [];
+	var host_list = [];
+	var mem_data = [];
+	var view_list = [];
+	var sum_data = [];
+	var table_distribution = [];
+	var current_id = "";
+	var adjust_id = "";
+	var adjusted_table_distribution = [];
+	var table_info = [];
+	var group_id = "";
+	var oInput = new sap.ui.commons.TextArea(
+			{
+				id : 'input',
+				value : 'joey/123;JD_TEST/CV_INDEPENDENT;joey/asd;joey/qwe;joey/zxc;joey/iop;joey/jkl;joey/bnm',
+				tooltip : 'Views',
+				cols : 100,
+				rows : 15,
+				wrapping : sap.ui.core.Wrapping.On,
+				valueState : sap.ui.core.ValueState.Warning
+			});
+	oCell1.addContent(oInput);
+	var oButton1 = new sap.ui.commons.Button({
+		text : "Get Data",
+		tooltip : "Get Data from Server",
+		press : function(oEvent) {
+			jQuery.ajax({
+				url : "/Table_Distribution/hosts.xsjs",
+				async : false,
+				success : function(response) {
+					host_data = response;
+					host_list = [];
+					for (var i = 0; i < response.length; i++) {
+						host_list.push(response[i]["HOST"]);
+					}
+				},
+				error : function(e) {
+					console.log(e);
+				}
+			});
+			view_list = [];
+			var temptext = sap.ui.getCore().byId('input').getValue();
+			var pos = 0;
+			while (temptext.indexOf(";") >= 0) {
+				view_list[pos] = temptext.slice(0, temptext.indexOf(";"));
+				temptext = temptext.slice((temptext.indexOf(";") + 1),
+						temptext.length);
+				pos += 1;
+			}
+			view_list[pos] = temptext;
+			sum_data = [];
+			for (var i = 0; i < view_list.length; i++) {
+				jQuery.ajax({
+					url : "/Table_Distribution/sum.xsjs" + "?view=" + view_list[i],
+					async : false,
+					success : function(response) {
+						sum_data[i] = response;
+					},
+					error : function(e) {
+						console.log(e);
+					}
+				});
+			}
+			mem_data = [];
+			for (var i = 0; i < view_list.length; i++) {
+				jQuery.ajax({
+					url : "/Table_Distribution/mem.xsjs" + "?view=" + view_list[i],
+					async : false,
+					success : function(response) {
+						for (var j = 0; j < response.length; j++) {
+							response[j]["VIEW"] = view_list[i];
+						}
+						mem_data[i] = response;
+					},
+					error : function(e) {
+						console.log(e);
+					}
+				});
+			}
+		}
+	});
+	oCell2.addContent(oButton1);
+	var oButton2 = new sap.ui.commons.Button({
+		text : "Current",
+		tooltip : "Show Current Distribution",
+		press : function(oEvent) {
+			table_distribution = [];
+			table_info = [];
+			for (var i = 0; i < mem_data.length; i++) {
+				table_info = table_info.concat(mem_data[i]);
+			}
+			table_info = simplifyTable(table_info);
+			var name = Object.keys(table_info[0]);
+			for (var i = 0; i < table_info.length; i++) {
+				table_distribution[i] = {};
+				table_distribution[i][name[0]] = table_info[i][name[0]];
+				table_distribution[i][name[1]] = table_info[i][name[1]];
+				for (var j = 0; j < host_list.length; j++) {
+					if (table_info[i][name[5]] == host_list[j]) {
+						table_distribution[i][host_list[j]] = "x";
+					} else {
+						table_distribution[i][host_list[j]] = "-";
+					}
+				}
+			}
+			oCell4.removeContent(current_id);
+			var table_temp = createTable(table_distribution,
+					"Current Table Distribution");
+			oCell4.addContent(table_temp["TABLE"]);
+			current_id = table_temp["ID"];
+		}
+	});
+	oCell3.addContent(oButton2);
+	var oTextView1 = new sap.ui.commons.TextView({
+		text : 'Table categories: Small <',
+		tooltip : 'Table type',
+		wrapping : false,
+		});
+	oCell9.addContent(oTextView1);
+	var oInput2 = new sap.ui.commons.TextField({
+		id: 'input2',
+		value : '10',
+		tooltip : 'Change the Value',
+		width : '3em'
+	});
+	oCell9.addContent(oInput2);
+	var oTextView2 = new sap.ui.commons.TextView({
+		text : 'M> Medium <',
+		tooltip : 'Table type',
+		wrapping : false,
+		});
+	oCell9.addContent(oTextView2);
+	var oInput3 = new sap.ui.commons.TextField({
+		id: 'input3',
+		value : '700',
+		tooltip : 'Change the Value',
+		width : '3em'
+	});
+	oCell9.addContent(oInput3);
+	var oTextView3 = new sap.ui.commons.TextView({
+		text : 'M> Large ',
+		tooltip : 'Table type',
+		wrapping : false,
+		});
+	oCell9.addContent(oTextView3);
+	var oButton4 = new sap.ui.commons.Button(
+			{
+				text : "Table Category",
+				tooltip : "Table Category",
+				press : function(oEvent) {
+					var l = parseInt(oInput2.getValue());
+					var u = parseInt(oInput3.getValue());
+					var col1 = "< " + oInput2.getValue() + "M";
+					var col2 = "> " + oInput2.getValue() + "M " + oInput3.getValue() + "M <";
+					var col3 = "> " + oInput3.getValue() + "M";
+					var table_group = [];
+					for (var i = 0; i < table_info.length; i++) {
+						var temp = {};
+						temp["BASE_SCHEMA_NAME"] = table_info[i]["BASE_SCHEMA_NAME"];
+						temp["BASE_OBJECT_NAME"] = table_info[i]["BASE_OBJECT_NAME"];
+						if ((parseInt(table_info[i]["RECORD_COUNT"]) / 1000000) > l) {
+							if ((parseInt(table_info[i]["RECORD_COUNT"]) / 1000000) > u) {
+								temp[col1] = "-";
+								temp[col2] = "-";
+								temp[col3] = "x";
+							} else {
+								temp[col1] = "-";
+								temp[col2] = "x";
+								temp[col3] = "-";
+							}
+						} else {
+							temp[col1] = "x";
+							temp[col2] = "-";
+							temp[col3] = "-";
+						}
+						table_group.push(temp);
+					}
+					oCell6.removeContent(group_id);
+					var table_temp = createTable(table_group, "Tables");
+					oCell6.addContent(table_temp["TABLE"]);
+					group_id = table_temp["ID"];
+				}
+			});
+	oCell5.addContent(oButton4);
+	function sortTable(table) {
+		for (var i = 0; i < table.length; i++) {
+			for (var j = 0; j < table.length - 1; j++) {
+				if (parseInt(table[j]["RECORD_COUNT"]) < parseInt(table[j + 1]["RECORD_COUNT"])) {
+					var temp = table[j];
+					table[j] = table[j + 1];
+					table[j + 1] = temp;
+				}
+			}
+		}
+		return table;
+	}
+	function simplifyTable(table) {
+		var new_table = [];
+		new_table.push(table[0])
+		for (var i = 1; i < table.length; i++) {
+			var control = 0;
+			for (var j = 0; j < new_table.length; j++) {
+				if (new_table[j]["BASE_SCHEMA_NAME"] == table[i]["BASE_SCHEMA_NAME"]
+						&& new_table[j]["BASE_OBJECT_NAME"] == table[i]["BASE_OBJECT_NAME"]) {
+					control = 1;
+					break;
+				}
+			}
+			if (control == 0) {
+				new_table.push(table[i]);
+			}
+		}
+		return new_table;
+	}
+	function getIndex(table, view) {
+		var l = parseInt(oInput2.getValue());
+		var related_views = [];
+		var related_tables = [];
+		var index = [];
+		var new_table = [];
+		var new_view = [];
+		var control = false;
+		for (var i = 0; i < view.length; i++) {
+			for (var j = 0; j < view[i].length; j++) {
+				if (table["BASE_SCHEMA_NAME"] == view[i][j]["BASE_SCHEMA_NAME"]
+						&& table["BASE_OBJECT_NAME"] == view[i][j]["BASE_OBJECT_NAME"]) {
+					control = false;
+					related_views.push(view[i][0]["VIEW"])
+					related_tables = related_tables.concat(view[i]);
+					for (var k = 0; k < view[i].length; k++) {
+						if (parseInt(view[i][k]["RECORD_COUNT"]) / 1000000 > l
+								&& j != k) {
+							index.push([ i, k ]);
+						}
+					}
+					break;
+				} else {
+					control = true;
+				}
+			}
+			if (control) {
+				new_view.push(view[i]);
+			}
+		}
+		related_tables.push(table);
+		related_tables = simplifyTable(related_tables);
+		var ifContinue = index > 0;
+		return {
+			VIEW : related_views,
+			TABLE : related_tables,
+			NEW_VIEW : new_view,
+			CONTINUE : ifContinue,
+			INDEX : index,
+			OLD_VIEW : view
+		};
+	}
+	function simplifyView(view) {
+		var new_view = [];
+		for (var i = 0; i < view.length; i++) {
+			if (new_view.indexOf(view[i]) < 0) {
+				new_view.push(view[i]);
+			}
+		}
+		return new_view;
+	}
+	function getRelated(table, view) {
+		var temp1 = getIndex(table, view);
+		var related_views = temp1["VIEW"];
+		var related_tables = temp1["TABLE"];
+		if (temp1["CONTINUE"]) {
+			for (var i = 0; i < temp["INDEX"].length; i++) {
+				var temp2 = getRelated(
+						temp1["OLD_VIEW"][temp["INDEX"][i][0]][temp["INDEX"][i][0]],
+						temp1["NEW_VIEW"]);
+				related_views = related_views.concat(temp2["VIEW"]);
+				related_views = simplifyView(related_views);
+				related_tables = realted_tables.concat(temp2["TABLE"]);
+				related_tables = simplifyTable(related_tables);
+			}
+		}
+		return {
+			VIEW : related_views,
+			TABLE : related_tables
+		};
+	}
+	function getGroup(view) {
+		var table = [];
+		for (var i = 0; i < view.length; i++) {
+			table = table.concat(view[i]);
+		}
+		table = simplifyTable(table);
+		table = sortTable(table);
+		var base_table = table[0];
+		var group_info = getRelated(base_table, view);
+		var new_view = [];
+		var related_views = group_info["VIEW"]
+		for (var i = 0; i < view.length; i++) {
+			if (view[i].length == 0) {
+				continue;
+			}
+			if (related_views.indexOf(view[i][0]["VIEW"]) < 0) {
+				new_view.push(view[i]);
+			}
+		}
+		return {
+			GROUP : group_info,
+			VIEW : new_view
+		};
+	}
+	function divideViews(view) {
+		var group = [];
+		while (view.length > 0) {
+			var res = getGroup(view);
+			view = res["VIEW"];
+			group.push(res["GROUP"]);
+		}
+		return group;
+	}
+	function getHostmemory(host) {
+		var memory = [];
+		for (var i = 0; i < host.length; i++) {
+			var total_memory = parseInt(host[i]["FREE_PHYSICAL_MEMORY"])
+					+ parseInt(host[i]["USED_PHYSICAL_MEMORY"]);
+			memory.push({
+				HOST : host[i]["HOST"],
+				TOTAL_MEMORY : total_memory,
+				MEMORY_LEFT : total_memory
+			});
+		}
+		return memory;
+	}
+	function addGroup(host, group) {
+		for (var i = 0; i < group["TABLE"].length; i++) {
+			var control = true;
+			for (var j = 0; j < host["TABLE"].length; j++) {
+				var table1 = group["TABLE"][i];
+				var table2 = host["TABLE"][j];
+				if (table1["BASE_SCHEMA_NAME"] == table2["BASE_SCHEMA_NAME"]
+						&& table1["BASE_OBJECT_NAME"] == table2["BASE_OBJECT_NAME"]) {
+					control = false;
+					break;
+				}
+			}
+			if (control) {
+				host["TABLE"].push(group["TABLE"][i]);
+				host["MEMORY_LEFT"] -= group["TABLE"][i]["MEMORY_SIZE_IN_TOTAL"];
+			}
+		}
+		host["VIEW"] = host["VIEW"].concat(group["VIEW"]);
+		return host;
+	}
+	function next(pos, memory) {
+		if (pos == memory.length - 1) {
+			pos = 0
+		} else {
+			pos += 1;
+		}
+		return pos;
+	}
+	function before(pos, memory) {
+		if (pos == 0) {
+			pos = memory.length - 1;
+		} else {
+			pos -= 1;
+		}
+		return pos;
+	}
+	function distributeGroups(group, memory) {
+		for (var i = 0; i < memory.length; i++) {
+			memory[i]["TABLE"] = [];
+			memory[i]["VIEW"] = [];
+		}
+		var pos = 0;
+		for (var i = 0; i < group.length; i++) {
+			var host = addGroup(memory[pos], group[i]);
+			pos = next(pos, memory);
+			if (host["MEMORY_LEFT"] <= 0) {
+				i -= 1;
+				continue;
+			} else {
+				memory[before(pos, memory)]["TABLE"] = host["TABLE"];
+				memory[before(pos, memory)]["VIEW"] = host["VIEW"];
+				memory[before(pos, memory)]["MEMORY_LEFT"] = host["MEMORY_LEFT"];
+			}
+		}
+		/* for (var i = 0; i < memory.length; i++) {
+			memory[i]["TABLE"] = [];
+			memory[i]["VIEW"] = [];
+			if (group.length != 0) {
+				while (group.length > 0 && memory[i]["MEMORY_LEFT"] > 0) {
+					var host1 = addGroup(memory[i], group[0]);
+					if (host1["MEMORY_LEFT"] <= 0) {
+						break;
+					}
+					memory[i]["TABLE"] = host1["TABLE"];
+					memory[i]["VIEW"] = host1["VIEW"];
+					memory[i]["MEMORY_LEFT"] = host1["MEMORY_LEFT"];
+					group.shift();
+					if (group.length > 0) {
+						var host2 = addGroup(memory[i], group[group.length - 1]);
+						if (host2["MEMORY_LEFT"] <= 0) {
+							break;
+						}
+						group.pop();
+						memory[i]["TABLE"] = host2["TABLE"];
+						memory[i]["VIEW"] = host2["VIEW"];
+						memory[i]["MEMORY_LEFT"] = host2["MEMORY_LEFT"];
+					}
+				}
+			}
+		} */
+		return memory;
+	}
+	function distribute() {
+		var group = divideViews(mem_data);
+		var memory = getHostmemory(host_data);
+		var distribution = distributeGroups(group, memory);
+		var structure = [];
+		var table = [];
+		for (var i = 0; i < mem_data.length; i++) {
+			table = table.concat(mem_data[i]);
+		}
+		table = simplifyTable(table);
+		for (var i = 0; i < table.length; i++) {
+			var temp = {};
+			temp["BASE_SCHEMA_NAME"] = table[i]["BASE_SCHEMA_NAME"];
+			temp["BASE_OBJECT_NAME"] = table[i]["BASE_OBJECT_NAME"];
+			for (var j = 0; j < host_data.length; j++) {
+				temp[host_data[j]["HOST"]] = "-";
+			}
+			for (var j = 0; j < distribution.length; j++) {
+				for (var k = 0; k < distribution[j]["TABLE"].length; k++) {
+					if (temp["BASE_SCHEMA_NAME"] == distribution[j]["TABLE"][k]["BASE_SCHEMA_NAME"]
+							&& temp["BASE_OBJECT_NAME"] == distribution[j]["TABLE"][k]["BASE_OBJECT_NAME"]) {
+						temp[distribution[j]["HOST"]] = "x";
+						break;
+					}
+				}
+			}
+			structure.push(temp);
+		}
+		return structure;
+	}
+	var oButton3 = new sap.ui.commons.Button({
+		text : "Suggestion",
+		tooltip : "Show Suggestion Current Distribution",
+		press : function(oEvent) {
+			adjusted_table_distribution = distribute();
+			oCell8.removeContent(adjust_id);
+			var table_temp = createTable(adjusted_table_distribution,
+					"Adjusted Table Distribution");
+			oCell8.addContent(table_temp["TABLE"]);
+			adjust_id = table_temp["ID"];
+		}
+	});
+	oCell7.addContent(oButton3);
+</script>
+</head>
+<body class="sapUiBody">
+	<div id="uiArea1"></div>
+</body>
+</html>
